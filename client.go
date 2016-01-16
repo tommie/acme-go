@@ -169,7 +169,13 @@ func (a *ClientAccount) ValidateChallenge(uri string, req protocol.Response) (pr
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	// ACME spec., Sec. 6.5 says OK is returned.
+	// Boulder returns Accepted.
+	switch resp.StatusCode {
+	case http.StatusAccepted:
+	case http.StatusOK:
+		break
+	default:
 		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
 	}
 
@@ -198,6 +204,11 @@ func (a *ClientAccount) IssueCertificate(csr []byte) (*Certificate, error) {
 	}
 
 	uri, err := contentLocation(resp)
+	// ACME Spec Sec. 6.6 says servers SHOULD provide Content-Location.
+	// Boulder does not, so fall back to Location (which is not stable).
+	if err == http.ErrNoLocation {
+		uri, err = resp.Location()
+	}
 	if err != nil {
 		return nil, err
 	}
