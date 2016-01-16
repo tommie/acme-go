@@ -108,7 +108,7 @@ func (a *ClientAccount) AuthorizeIdentity(id Identifier) (*Authorization, error)
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("authorize identity: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return newAuthorization(authz, resp)
@@ -128,7 +128,7 @@ func (a *ClientAccount) Authorization(uri string) (*Authorization, error) {
 	case http.StatusOK:
 		break
 	default:
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("get authorization: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return newAuthorization(authz, resp)
@@ -153,7 +153,7 @@ func (a *ClientAccount) AuthorizationURIs() ([]string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("get authorization URIs: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return uris.Authorizations, nil
@@ -176,7 +176,7 @@ func (a *ClientAccount) ValidateChallenge(uri string, req protocol.Response) (pr
 	case http.StatusOK:
 		break
 	default:
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("validate challenge: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return chal, nil
@@ -200,7 +200,7 @@ func (a *ClientAccount) IssueCertificate(csr []byte) (*Certificate, error) {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("issue certificate: unexpected HTTP status: %s", resp.Status)
 	}
 
 	uri, err := contentLocation(resp)
@@ -248,7 +248,7 @@ func (a *ClientAccount) Certificate(uri string) (*Certificate, error) {
 			break
 
 		default:
-			return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+			return nil, fmt.Errorf("get certificate: unexpected HTTP status: %s", resp.Status)
 		}
 
 		d, _ := retryAfter(resp.Header, 1*time.Second)
@@ -274,7 +274,7 @@ func (a *ClientAccount) CertificateURIs() ([]string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return nil, fmt.Errorf("get certificate URIs: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return uris.Certificates, nil
@@ -298,7 +298,7 @@ func (a *ClientAccount) RevokeCertificate(cert []byte) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+		return fmt.Errorf("revoke certificate: unexpected HTTP status: %s", resp.Status)
 	}
 
 	return nil
