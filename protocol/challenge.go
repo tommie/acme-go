@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/square/go-jose"
@@ -19,7 +20,14 @@ func KeyAuthz(tok string, key *jose.JsonWebKey) (string, error) {
 		return "", err
 	}
 
-	return tok + "." + base64.URLEncoding.EncodeToString(tp), nil
+	return tok + "." + RawURLEncodeToString(tp), nil
+}
+
+// RawURLEncodeToString emulates base64.RawURLEncoding.EncodeToString
+// found in go1.5.
+func RawURLEncodeToString(bs []byte) string {
+	ret := base64.URLEncoding.EncodeToString(bs)
+	return strings.TrimRight(ret, "=")
 }
 
 var (

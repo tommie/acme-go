@@ -22,7 +22,7 @@ func TestRespondHTTP01(t *testing.T) {
 	want := &HTTP01Response{
 		Resource:         ResourceChallenge,
 		Type:             ChallengeHTTP01,
-		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y=",
+		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("RespondHTTP01: got %+v, want %+v", got, want)

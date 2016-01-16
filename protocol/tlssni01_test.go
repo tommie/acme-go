@@ -22,7 +22,7 @@ func TestRespondTLSSNI01(t *testing.T) {
 	want := &TLSSNI01Response{
 		Resource:         ResourceChallenge,
 		Type:             ChallengeTLSSNI01,
-		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y=",
+		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("RespondTLSSNI01: got %+v, want %+v", got, want)

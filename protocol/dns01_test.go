@@ -22,7 +22,7 @@ func TestRespondDNS01(t *testing.T) {
 	want := &DNS01Response{
 		Resource:         ResourceChallenge,
 		Type:             ChallengeDNS01,
-		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y=",
+		KeyAuthorization: "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("RespondDNS01: got %+v, want %+v", got, want)

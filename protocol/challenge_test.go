@@ -16,7 +16,7 @@ func TestKeyAuthz(t *testing.T) {
 		t.Fatalf("KeyAuthz failed: %v", err)
 	}
 
-	if want := "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y="; got != want {
+	if want := "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y"; got != want {
 		t.Errorf("KeyAuthz: got %q, want %q", got, want)
 	}
 }
