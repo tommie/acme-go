@@ -190,7 +190,7 @@ type ServerError struct {
 
 // newServerError creates a new ServerError based on a request and response.
 func newServerError(req *http.Request, resp *http.Response) *ServerError {
-	if resp.Header.Get(acceptHeader) != protocol.ProblemJSON {
+	if resp.Header.Get(contentTypeHeader) != protocol.ProblemJSON {
 		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
 	}
 
@@ -227,7 +227,7 @@ func signJSON(s jose.Signer, payload interface{}) (*protocol.JSONWebSignature, e
 // decodeBody decodes an HTTP body as a specific contentType.
 func decodeBody(out interface{}, contentType string, r io.Reader) error {
 	switch contentType {
-	case protocol.JSON:
+	case protocol.JSON, protocol.ProblemJSON:
 		return json.NewDecoder(r).Decode(out)
 
 	case protocol.PKIXCert:
@@ -250,7 +250,7 @@ func decodeBody(out interface{}, contentType string, r io.Reader) error {
 // encodeBody encodes an HTTP body as specified by the contentType.
 func encodeBody(contentType string, in interface{}) (io.Reader, error) {
 	switch contentType {
-	case protocol.JSON:
+	case protocol.JSON, protocol.ProblemJSON:
 		b := bytes.NewBuffer(nil)
 		if err := json.NewEncoder(b).Encode(in); err != nil {
 			return nil, err

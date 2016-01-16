@@ -25,6 +25,7 @@ func newFakeACMEServer() (*fakeACMEServer, *httptest.Server) {
 
 	as.mux.HandleFunc("/", as.directory)
 	as.mux.HandleFunc("/new-registration", as.newRegistration)
+	as.mux.HandleFunc("/new-authz", as.newAuthz)
 	hts := httptest.NewServer(as.mux)
 	as.baseURL = hts.URL
 
@@ -60,6 +61,22 @@ func (s *fakeACMEServer) newRegistration(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Location", s.baseURL+"/reg/1")
 		s.setNonce(w)
 		s.respond(w, http.StatusCreated, protocol.JSON, &reg)
+
+	default:
+		http.Error(w, r.Method, http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *fakeACMEServer) newAuthz(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		p := protocol.Problem{
+			Type: protocol.Unauthorized,
+			Title: "mock error",
+			Detail: "mock error detail",
+		}
+		s.setNonce(w)
+		s.respond(w, http.StatusUnauthorized, protocol.ProblemJSON, &p)
 
 	default:
 		http.Error(w, r.Method, http.StatusMethodNotAllowed)

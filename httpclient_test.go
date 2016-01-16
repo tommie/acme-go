@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/square/go-jose"
@@ -53,6 +54,19 @@ func TestHTTPClientPost(t *testing.T) {
 
 	if !reflect.DeepEqual(got, in) {
 		t.Errorf("Post(%q): got %+v, want %+v", hts.URL, got, in)
+	}
+}
+
+func TestHTTPClientProblem(t *testing.T) {
+	_, hts := newFakeACMEServer()
+	defer hts.Close()
+
+	_, err := newHTTPClient(nil).Get(hts.URL+"/new-authz", protocol.JSON, nil)
+	if err == nil {
+		t.Fatalf("Get(%q) got success, want server error", hts.URL+"/new-authz")
+	}
+	if want := "mock error detail (401 urn:acme:error:unauthorized)"; !strings.HasSuffix(err.Error(), want) {
+		t.Fatalf("Get(%q) failed: got %v, want suffix %q", hts.URL+"/new-authz", err, want)
 	}
 }
 
