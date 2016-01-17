@@ -83,3 +83,14 @@ func TestTLSSNI01Response(t *testing.T) {
 		t.Errorf("Unmarshal: got %v, want %v", got, in)
 	}
 }
+
+func TestTLSSNI01Names(t *testing.T) {
+	got := TLSSNI01Names("keyauth", 2)
+	want := []string{
+		"c1b1fd8fabe4017a5f47ab1398fa890b.31d9b5b6bca9ee56bf1a003fd84c4f3b.acme.invalid",
+		"d61dda439470857edb7531d028e5ca15.4d5237fa8e5fa7e8485902799e52fe24.acme.invalid",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("TLSSNI01Names: got %v, want %v", got, want)
+	}
+}

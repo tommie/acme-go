@@ -1,7 +1,10 @@
 package protocol
 
 import (
+	"crypto"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/square/go-jose"
 )
@@ -27,6 +30,22 @@ func RespondTLSSNI01(key *jose.JsonWebKey, c *TLSSNI01Challenge) (*TLSSNI01Respo
 	}
 
 	return &TLSSNI01Response{c.Resource, c.Type, ka}, nil
+}
+
+// TLSSNI01Names returns the server names to use in challenges. They
+// are FQDNs ending in TLSSNI01Suffix.
+func TLSSNI01Names(ka string, n int) []string {
+	var ret []string
+	z := ka
+	h := crypto.SHA256.New()
+	for i := 0; i < n; i++ {
+		h.Reset()
+		h.Write([]byte(z))
+		// EncodeToString casing is undefined. https://github.com/golang/go/issues/11254
+		z = strings.ToLower(hex.EncodeToString(h.Sum(nil)))
+		ret = append(ret, strings.Join([]string{z[:32], z[32:], TLSSNI01Suffix}, "."))
+	}
+	return ret
 }
 
 type TLSSNI01Challenge struct {
