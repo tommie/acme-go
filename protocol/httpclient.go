@@ -1,4 +1,4 @@
-package acme
+package protocol
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"regexp"
 
 	"github.com/square/go-jose"
-	"github.com/tommie/acme-go/protocol"
 )
 
 const (
@@ -27,21 +26,31 @@ var (
 	replayNonceRE = regexp.MustCompile("^[A-Za-z0-9_-]+$")
 )
 
-// httpClient is an ACME HTTP client. It is an adapter between the
+// HTTPClient is an ACME HTTP client. It is an adapter between the
 // standard HTTP client and ACME clients. It marshals requests,
 // identifies errors, unmarshals responses and records nonces.
-type httpClient struct {
-	http   *http.Client
+type HTTPClient struct {
+	http   HTTPDoer
 	signer jose.Signer
 	nonces nonceStack
 }
 
-// newHTTPClient returns a new ACME HTTP client using
-// http.DefaultClient. signer can be nil, but will cause Post
-// invocations to fail.
-func newHTTPClient(signer jose.Signer) *httpClient {
-	ret := &httpClient{
-		http:   http.DefaultClient,
+// An HTTPDoer is able to make HTTP requests. *net/http.Client is an
+// example.
+type HTTPDoer interface {
+	// Do performs an HTTP request.
+	Do(*http.Request) (*http.Response, error)
+}
+
+// NewHTTPClient returns a new ACME HTTP client using the HTTP client.
+// If hc is nil, http.DefaultClient is used.
+// signer can be nil, but will cause Post invocations to fail.
+func NewHTTPClient(hc HTTPDoer, signer jose.Signer) *HTTPClient {
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	ret := &HTTPClient{
+		http:   hc,
 		signer: signer,
 	}
 	if signer != nil {
@@ -54,7 +63,7 @@ func newHTTPClient(signer jose.Signer) *httpClient {
 // Get performs a GET request to the given URL. It sets the Accept
 // header and parses the response into respBody, unless it is nil. If
 // respBody is nil, the response body must be closed by the caller.
-func (c *httpClient) Get(url, accept string, respBody interface{}) (*http.Response, error) {
+func (c *HTTPClient) Get(url, accept string, respBody interface{}) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -65,7 +74,7 @@ func (c *httpClient) Get(url, accept string, respBody interface{}) (*http.Respon
 
 // Head performs a HEAD request to the given URL. The response body is
 // already closed on return.
-func (c *httpClient) Head(url string) (*http.Response, error) {
+func (c *HTTPClient) Head(url string) (*http.Response, error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return nil, err
@@ -84,7 +93,7 @@ func (c *httpClient) Head(url string) (*http.Response, error) {
 // unless it is nil. If respBody is nil, the response body must be
 // closed by the caller.  If reqBody is not nil, it is encoded
 // (depending on contentType).
-func (c *httpClient) Post(url, accept string, reqBody, respBody interface{}) (*http.Response, error) {
+func (c *HTTPClient) Post(url, accept string, reqBody, respBody interface{}) (*http.Response, error) {
 	var r io.Reader
 	if reqBody != nil {
 		if c.signer == nil {
@@ -108,7 +117,7 @@ func (c *httpClient) Post(url, accept string, reqBody, respBody interface{}) (*h
 	}
 	req.Header.Add(acceptHeader, accept)
 	if r != nil {
-		req.Header.Set(contentTypeHeader, protocol.JSON)
+		req.Header.Set(contentTypeHeader, JSON)
 	}
 	return c.do(req, respBody)
 }
@@ -117,7 +126,7 @@ func (c *httpClient) Post(url, accept string, reqBody, respBody interface{}) (*h
 // ServerError. If respBody is nil, the body of the response must be
 // closed by the caller. Otherwise, the body will be parsed into
 // respBody and closed.
-func (c *httpClient) do(req *http.Request, respBody interface{}) (*http.Response, error) {
+func (c *HTTPClient) do(req *http.Request, respBody interface{}) (*http.Response, error) {
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
@@ -139,7 +148,7 @@ func (c *httpClient) do(req *http.Request, respBody interface{}) (*http.Response
 		}
 	}
 
-	n := resp.Header.Get(protocol.ReplayNonce)
+	n := resp.Header.Get(ReplayNonce)
 	if replayNonceRE.MatchString(n) {
 		c.nonces.add(n)
 	}
@@ -185,17 +194,17 @@ type ServerError struct {
 	StatusCode int
 
 	// Problem is the problem object, if one was supplied.
-	Problem *protocol.Problem
+	Problem *Problem
 }
 
 // newServerError creates a new ServerError based on a request and response.
 func newServerError(req *http.Request, resp *http.Response) *ServerError {
-	if resp.Header.Get(contentTypeHeader) != protocol.ProblemJSON {
+	if resp.Header.Get(contentTypeHeader) != ProblemJSON {
 		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
 	}
 
-	p := &protocol.Problem{}
-	if err := decodeBody(p, protocol.ProblemJSON, resp.Body); err != nil {
+	p := &Problem{}
+	if err := decodeBody(p, ProblemJSON, resp.Body); err != nil {
 		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
 	}
 	return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, p}
@@ -209,28 +218,13 @@ func (e *ServerError) Error() string {
 	return fmt.Sprintf("server error on %s %s: %s (%d %s)", e.Method, e.URL, e.Problem.Detail, e.StatusCode, e.Problem.Type)
 }
 
-// signJSON encodes the payload as JSON and signs it.
-func signJSON(s jose.Signer, payload interface{}) (*protocol.JSONWebSignature, error) {
-	bs, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	ret, err := s.Sign(bs)
-	if err != nil {
-		return nil, err
-	}
-
-	return (*protocol.JSONWebSignature)(ret), nil
-}
-
 // decodeBody decodes an HTTP body as a specific contentType.
 func decodeBody(out interface{}, contentType string, r io.Reader) error {
 	switch contentType {
-	case protocol.JSON, protocol.ProblemJSON:
+	case JSON, ProblemJSON:
 		return json.NewDecoder(r).Decode(out)
 
-	case protocol.PKIXCert:
+	case PKIXCert:
 		bs, err := ioutil.ReadAll(r)
 		if err != nil {
 			return err
@@ -250,14 +244,14 @@ func decodeBody(out interface{}, contentType string, r io.Reader) error {
 // encodeBody encodes an HTTP body as specified by the contentType.
 func encodeBody(contentType string, in interface{}) (io.Reader, error) {
 	switch contentType {
-	case protocol.JSON, protocol.ProblemJSON:
+	case JSON, ProblemJSON:
 		b := bytes.NewBuffer(nil)
 		if err := json.NewEncoder(b).Encode(in); err != nil {
 			return nil, err
 		}
 		return b, nil
 
-	case protocol.PKIXCert:
+	case PKIXCert:
 		bsin, ok := in.(*[]byte)
 		if !ok {
 			return nil, fmt.Errorf("expected input to be a *[]byte, got %T", in)

@@ -56,7 +56,7 @@ func NewClientAccount(dirURI, regURI string, accountKey crypto.PrivateKey) (*Cli
 		return nil, err
 	}
 
-	hc := newHTTPClient(s)
+	hc := protocol.NewHTTPClient(nil, s)
 	// Get an initial nonce and validate the URI.
 	if _, err := hc.Head(dirURI); err != nil {
 		return nil, err

@@ -130,10 +130,6 @@ type Getter interface {
 	// header and parses the response into respBody, unless it is nil. If
 	// respBody is nil, the response body must be closed by the caller.
 	Get(url, accept string, respBody interface{}) (*http.Response, error)
-
-	// Head performs a HEAD request to the given URL. The response body is
-	// already closed on return.
-	Head(url string) (*http.Response, error)
 }
 
 // Poster is an interface to perform ACME HTTP POST requests. It is an
