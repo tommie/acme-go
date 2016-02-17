@@ -17,7 +17,7 @@ func TestHTTPClientGet(t *testing.T) {
 	defer hts.Close()
 
 	var d Directory
-	_, err := NewHTTPClient(nil, nil).Get(hts.URL, JSON, &d)
+	_, err := NewHTTPClient(nil, nil).Get(hts.URL+DirectoryPath, JSON, &d)
 	if err != nil {
 		t.Fatalf("Get(%q) failed: %v", hts.URL, err)
 	}
@@ -27,7 +27,7 @@ func TestHTTPClientHead(t *testing.T) {
 	hts := newFakeHTTPServer()
 	defer hts.Close()
 
-	_, err := NewHTTPClient(nil, nil).Head(hts.URL)
+	_, err := NewHTTPClient(nil, nil).Head(hts.URL + DirectoryPath)
 	if err != nil {
 		t.Fatalf("Head(%q) failed: %v", hts.URL, err)
 	}
@@ -48,7 +48,7 @@ func TestHTTPClientPost(t *testing.T) {
 		Resource: ResourceNewReg,
 	}
 	var got Registration
-	_, err = c.Post(hts.URL+"/new-registration", JSON, &in, &got)
+	_, err = c.Post(hts.URL+NewRegPath, JSON, &in, &got)
 	if err != nil {
 		t.Fatalf("Post(%q) failed: %v", hts.URL, err)
 	}
@@ -62,12 +62,12 @@ func TestHTTPClientProblem(t *testing.T) {
 	hts := newFakeHTTPServer()
 	defer hts.Close()
 
-	_, err := NewHTTPClient(nil, nil).Get(hts.URL+"/new-authz", JSON, nil)
+	_, err := NewHTTPClient(nil, nil).Get(hts.URL+NewAuthzPath, JSON, nil)
 	if err == nil {
-		t.Fatalf("Get(%q) got success, want server error", hts.URL+"/new-authz")
+		t.Fatalf("Get(%q) got success, want server error", hts.URL+NewAuthzPath)
 	}
 	if want := "mock error detail (401 urn:acme:error:unauthorized)"; !strings.HasSuffix(err.Error(), want) {
-		t.Fatalf("Get(%q) failed: got %v, want suffix %q", hts.URL+"/new-authz", err, want)
+		t.Fatalf("Get(%q) failed: got %v, want suffix %q", hts.URL+NewAuthzPath, err, want)
 	}
 }
 
@@ -76,11 +76,11 @@ func newFakeHTTPServer() *httptest.Server {
 		defer r.Body.Close()
 
 		switch r.URL.Path {
-		case "/":
+		case DirectoryPath:
 			w.Header().Set(contentTypeHeader, JSON)
 			json.NewEncoder(w).Encode(&Directory{})
 
-		case "/new-registration":
+		case NewRegPath:
 			bs, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -102,7 +102,7 @@ func newFakeHTTPServer() *httptest.Server {
 				return
 			}
 
-		case "/new-authz":
+		case NewAuthzPath:
 			w.Header().Set(contentTypeHeader, ProblemJSON)
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(&Problem{

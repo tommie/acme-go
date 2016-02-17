@@ -83,3 +83,17 @@ const (
 	MAC     RecoveryMethod = "mac"
 	Contact RecoveryMethod = "contact"
 )
+
+// From github.com/letsencrypt/boulder/blob/master/wfe/web-front-end.go
+const (
+	DirectoryPath  = "/directory"
+	NewRegPath     = "/acme/new-reg"
+	RecoverRegPath = "/acme/recover-reg"
+	RegPath        = "/acme/reg/"
+	NewAuthzPath   = "/acme/new-authz"
+	AuthzPath      = "/acme/authz/"
+	ChallengePath  = "/acme/challenge/"
+	NewCertPath    = "/acme/new-cert"
+	CertPath       = "/acme/cert/"
+	RevokeCertPath = "/acme/revoke-cert"
+)
