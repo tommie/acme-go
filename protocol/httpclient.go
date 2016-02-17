@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"regexp"
 
 	"github.com/square/go-jose"
@@ -177,45 +176,6 @@ func (s *nonceStack) Nonce() (string, error) {
 	ret := s.ns[n-1]
 	s.ns = s.ns[:n-1]
 	return ret, nil
-}
-
-// ServerError is an error reported by an ACME server.
-type ServerError struct {
-	// Method is the HTTP method used.
-	Method string
-
-	// URL is the request URL.
-	URL *url.URL
-
-	// Status is the status string returned by the server.
-	Status string
-
-	// StatusCode is the status code returned by the server.
-	StatusCode int
-
-	// Problem is the problem object, if one was supplied.
-	Problem *Problem
-}
-
-// newServerError creates a new ServerError based on a request and response.
-func newServerError(req *http.Request, resp *http.Response) *ServerError {
-	if resp.Header.Get(contentTypeHeader) != ProblemJSON {
-		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
-	}
-
-	p := &Problem{}
-	if err := decodeBody(p, ProblemJSON, resp.Body); err != nil {
-		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
-	}
-	return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, p}
-}
-
-func (e *ServerError) Error() string {
-	if e.Problem == nil {
-		return fmt.Sprintf("server error on %s %s: %s", e.Method, e.URL, e.Status)
-	}
-
-	return fmt.Sprintf("server error on %s %s: %s (%d %s)", e.Method, e.URL, e.Problem.Detail, e.StatusCode, e.Problem.Type)
 }
 
 // decodeBody decodes an HTTP body as a specific contentType.
