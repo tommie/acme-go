@@ -76,5 +76,5 @@ func (c *TLSSNI01Response) GetResource() ResourceType { return c.Resource }
 func (c *TLSSNI01Response) GetType() ChallengeType    { return c.Type }
 
 func init() {
-	MustRegisterChallengeType(ChallengeTLSSNI01, &TLSSNI01Challenge{})
+	MustRegisterChallengeType(ChallengeTLSSNI01, &TLSSNI01Challenge{}, &TLSSNI01Response{})
 }

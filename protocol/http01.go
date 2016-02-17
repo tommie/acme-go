@@ -56,5 +56,5 @@ func (c *HTTP01Response) GetResource() ResourceType { return c.Resource }
 func (c *HTTP01Response) GetType() ChallengeType    { return c.Type }
 
 func init() {
-	MustRegisterChallengeType(ChallengeHTTP01, &HTTP01Challenge{})
+	MustRegisterChallengeType(ChallengeHTTP01, &HTTP01Challenge{}, &HTTP01Response{})
 }

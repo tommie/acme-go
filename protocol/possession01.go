@@ -62,5 +62,5 @@ func (c *Possession01Response) GetResource() ResourceType { return c.Resource }
 func (c *Possession01Response) GetType() ChallengeType    { return c.Type }
 
 func init() {
-	MustRegisterChallengeType(ChallengePossession01, &Possession01Challenge{})
+	MustRegisterChallengeType(ChallengePossession01, &Possession01Challenge{}, &Possession01Response{})
 }

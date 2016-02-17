@@ -109,6 +109,16 @@ type Response interface {
 	GetType() ChallengeType
 }
 
+// GenericResponse is a concrete implementation of Response with no
+// type-specific information. ACME Section 7.
+type GenericResponse struct {
+	Resource ResourceType  `json:"resource,omitempty"`
+	Type     ChallengeType `json:"type,omitempty"`
+}
+
+func (c *GenericResponse) GetResource() ResourceType { return c.Resource }
+func (c *GenericResponse) GetType() ChallengeType    { return c.Type }
+
 // Identifier describes a certificate subject. ACME Section 5.3.
 type Identifier struct {
 	Type  IdentifierType `json:"type"`

@@ -54,5 +54,5 @@ func (c *DNS01Response) GetResource() ResourceType { return c.Resource }
 func (c *DNS01Response) GetType() ChallengeType    { return c.Type }
 
 func init() {
-	MustRegisterChallengeType(ChallengeDNS01, &DNS01Challenge{})
+	MustRegisterChallengeType(ChallengeDNS01, &DNS01Challenge{}, &DNS01Response{})
 }
