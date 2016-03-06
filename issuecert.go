@@ -160,7 +160,9 @@ func (ci *CertificateIssuer) startSolver(s Solver, cs []protocol.Challenge) (fun
 		return nil, err
 	}
 	errStop := stop
-	defer errStop()
+	defer func() {
+		errStop()
+	}()
 
 	if len(resps) != len(cs) {
 		return nil, fmt.Errorf("solver was given %d challenges, but returned %d responses (the solver code is broken)", len(cs), len(resps))
