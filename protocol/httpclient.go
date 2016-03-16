@@ -200,25 +200,3 @@ func decodeBody(out interface{}, contentType string, r io.Reader) error {
 		return fmt.Errorf("unhandled content type: %q", contentType)
 	}
 }
-
-// encodeBody encodes an HTTP body as specified by the contentType.
-func encodeBody(contentType string, in interface{}) (io.Reader, error) {
-	switch contentType {
-	case JSON, ProblemJSON:
-		b := bytes.NewBuffer(nil)
-		if err := json.NewEncoder(b).Encode(in); err != nil {
-			return nil, err
-		}
-		return b, nil
-
-	case PKIXCert:
-		bsin, ok := in.(*[]byte)
-		if !ok {
-			return nil, fmt.Errorf("expected input to be a *[]byte, got %T", in)
-		}
-		return bytes.NewReader(*bsin), nil
-
-	default:
-		return nil, fmt.Errorf("unhandled content type: %q", contentType)
-	}
-}
