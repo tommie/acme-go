@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/square/go-jose"
 	"github.com/tommie/acme-go/protocol"
@@ -24,12 +23,12 @@ func RegisterAccount(dirURI string, accountKey crypto.PrivateKey, opts ...Regist
 		return nil, nil, err
 	}
 
-	reg, u, err := doRegistration(a.http, d.NewReg, &protocol.Registration{Resource: protocol.ResourceNewReg}, opts...)
+	reg, err := doRegistration(a.http, d.NewReg, &protocol.Registration{Resource: protocol.ResourceNewReg}, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.URI = u.String()
+	a.URI = reg.URI
 
 	return a, reg, nil
 }
@@ -60,7 +59,7 @@ func WithRecoveryKeyMaterial(key *ecdsa.PrivateKey, len int) RegistrationOpt {
 // doRegistration runs a registration. req needs to have at least
 // Resource set. Returns ErrPending and the registration URL if the
 // registration is not yet complete.
-func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, opts ...RegistrationOpt) (*Registration, *url.URL, error) {
+func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, opts ...RegistrationOpt) (*Registration, error) {
 	for _, opt := range opts {
 		opt(req)
 	}
@@ -76,7 +75,7 @@ func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, 
 
 	reg, resp, err := protocol.PostRegistration(hc, uri, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	u, _ := resp.Location()
@@ -88,12 +87,18 @@ func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, 
 		break
 
 	default:
-		return nil, nil, fmt.Errorf("unexpected HTTP status code: %s", resp.Status)
+		return nil, fmt.Errorf("unexpected HTTP status code: %s", resp.Status)
 	}
 
 	ret, err := newRegistration(reg, req, recPriv)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
+	}
+
+	if u == nil {
+		ret.URI = uri
+	} else {
+		ret.URI = u.String()
 	}
 
 	us := links(resp, "terms-of-service")
@@ -101,11 +106,12 @@ func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, 
 		ret.TermsOfServiceURI = us[0]
 	}
 
-	return ret, u, nil
+	return ret, nil
 }
 
 type Registration struct {
 	protocol.Registration
+	URI               string
 	RecoveryKey       []byte
 	TermsOfServiceURI string
 }

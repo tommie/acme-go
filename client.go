@@ -77,14 +77,14 @@ func (a *ClientAccount) UpdateRegistration(opts ...RegistrationOpt) (*Registrati
 		return nil, fmt.Errorf("nothing to update")
 	}
 
-	ret, _, err := doRegistration(a.http, a.URI, &protocol.Registration{Resource: protocol.ResourceReg}, opts...)
+	ret, err := doRegistration(a.http, a.URI, &protocol.Registration{Resource: protocol.ResourceReg}, opts...)
 	return ret, err
 }
 
 // Registration fetches the current registration resource. If the
 // account registration is not complete, this returns ErrPending.
 func (a *ClientAccount) Registration() (*Registration, error) {
-	ret, _, err := doRegistration(a.http, a.URI, &protocol.Registration{Resource: protocol.ResourceReg})
+	ret, err := doRegistration(a.http, a.URI, &protocol.Registration{Resource: protocol.ResourceReg})
 	return ret, err
 }
 

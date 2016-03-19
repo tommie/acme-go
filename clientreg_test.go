@@ -17,7 +17,10 @@ func TestClientAccountRegisterAccount(t *testing.T) {
 	if want := []string{"mailto:acme@example.com"}; !reflect.DeepEqual(reg.ContactURIs, want) {
 		t.Errorf("RegisterAccount(WithContactURIs) ContactURIs: got %v, want %v", reg.ContactURIs, want)
 	}
+	if want := "/reg/1"; !strings.HasSuffix(reg.URI, want) {
+		t.Errorf("RegisterAccount(WithContactURIs) reg.URI: got %v, want suffix %v", reg.URI, want)
+	}
 	if want := "/reg/1"; !strings.HasSuffix(a.URI, want) {
-		t.Errorf("RegisterAccount(WithContactURIs) URI: got %v, want suffix %v", a.URI, want)
+		t.Errorf("RegisterAccount(WithContactURIs) a.URI: got %v, want suffix %v", a.URI, want)
 	}
 }
