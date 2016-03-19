@@ -92,13 +92,16 @@ func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, 
 	}
 
 	ret, err := newRegistration(reg, req, recPriv)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	us := links(resp, "terms-of-service")
 	if len(us) > 0 {
 		ret.TermsOfServiceURI = us[0]
 	}
 
-	return ret, u, err
+	return ret, u, nil
 }
 
 type Registration struct {
