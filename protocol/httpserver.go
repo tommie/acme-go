@@ -12,6 +12,10 @@ import (
 	"github.com/square/go-jose"
 )
 
+// requestBodyLimit is the maximum number of bytes we read from a
+// request body. This is for basic DoS protection.
+const requestBodyLimit int = 1 << 20
+
 // A NonceSource is something that can generate and verify replay nonces.
 type NonceSource interface {
 	jose.NonceSource
@@ -108,7 +112,7 @@ func encodeBody(w io.Writer, contentType string, in interface{}) error {
 // against ns. If successful, the function returns the key used to sign the body.
 func readRequest(out interface{}, r *http.Request, ns NonceSource) (crypto.PublicKey, error) {
 	signed := &JSONWebSignature{}
-	if err := json.NewDecoder(r.Body).Decode(signed); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(nil, r.Body, int64(requestBodyLimit))).Decode(signed); err != nil {
 		return nil, serverErrorf(http.StatusBadRequest, Malformed, "%v", err)
 	}
 	if len(signed.Signatures) != 1 {

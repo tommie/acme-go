@@ -251,6 +251,23 @@ func TestReadRequest(t *testing.T) {
 	}
 }
 
+func TestReadRequestBodyLimit(t *testing.T) {
+	bs := []byte(`{"resource":"` + strings.Repeat("12", requestBodyLimit) + `"}`)
+	req := &http.Request{
+		Method: "POST",
+		Header: http.Header{acceptHeader: []string{PKIXCert}, contentTypeHeader: []string{JSON}},
+		Body:   ioutil.NopCloser(bytes.NewReader(bs)),
+	}
+	var reg Registration
+	_, err := readRequest(&reg, req, nil)
+	if err == nil {
+		t.Fatalf("readRequest err: got %v, want Bad Request", err)
+	}
+	if want := "too large"; !strings.Contains(err.Error(), want) {
+		t.Fatalf("readRequest err: got %v, want containing %q", err, want)
+	}
+}
+
 type fakeNonceSource struct {
 	next   int
 	unseen map[string]bool
