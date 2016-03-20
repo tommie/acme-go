@@ -4,13 +4,15 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/tommie/acme-go/protocol"
 )
 
 func TestClientAccountRegisterAccount(t *testing.T) {
 	_, hts := newFakeACMEServer()
 	defer hts.Close()
 
-	a, reg, err := RegisterAccount(hts.URL, testJWK.Key, WithContactURIs("mailto:acme@example.com"))
+	a, reg, err := RegisterAccount(hts.URL+protocol.DirectoryPath, testJWK.Key, WithContactURIs("mailto:acme@example.com"))
 	if err != nil {
 		t.Fatalf("RegisterAccount(WithContactURIs) failed: %v", err)
 	}

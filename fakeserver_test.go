@@ -1,177 +1,121 @@
 package acme
 
 import (
-	"bytes"
+	"crypto"
 	"crypto/rsa"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
+	"sync"
 
 	"github.com/square/go-jose"
 	"github.com/tommie/acme-go/protocol"
 )
 
-const (
-	contentTypeHeader = "Content-Type"
-)
+var errBadNonce = errors.New("bad nonce")
 
-type fakeACMEServer struct {
-	mux       *http.ServeMux
-	baseURL   string
-	nextNonce int64
-}
+type fakeACMEServer struct{}
 
+// newFakeACMEServer creates a fake ACME server and starts a listener.
 func newFakeACMEServer() (*fakeACMEServer, *httptest.Server) {
-	as := &fakeACMEServer{
-		mux: http.NewServeMux(),
+	as := &fakeACMEServer{}
+	mux := http.NewServeMux()
+	hts := httptest.NewServer(mux)
+	u, err := url.Parse(hts.URL)
+	if err != nil {
+		panic(err)
 	}
-
-	as.mux.HandleFunc("/", as.directory)
-	as.mux.HandleFunc("/new-registration", as.newRegistration)
-	as.mux.HandleFunc("/new-authz", as.newAuthz)
-	hts := httptest.NewServer(as.mux)
-	as.baseURL = hts.URL
+	RegisterBoulderHTTP(mux, u, as, newIntNonceSource())
 
 	return as, hts
 }
 
-func (s *fakeACMEServer) directory(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		s.respond(w, http.StatusOK, protocol.JSON, &protocol.Directory{
-			NewReg: s.baseURL + "/new-registration",
-		})
-
-	case "HEAD":
-		s.setNonce(w)
-
-	default:
-		http.Error(w, r.Method, http.StatusMethodNotAllowed)
-	}
+func (s *fakeACMEServer) RegisterAccount(accountKey crypto.PublicKey, reg *Registration) (*Registration, error) {
+	reg.URI = "http://example.com/reg/1"
+	return reg, nil
 }
 
-func (s *fakeACMEServer) newRegistration(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "HEAD":
-		s.setNonce(w)
-
-	case "POST":
-		var reg protocol.Registration
-		if err := s.decodeBody(&reg, r); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set(locationHeader, s.baseURL+"/reg/1")
-		s.setNonce(w)
-		s.respond(w, http.StatusCreated, protocol.JSON, &reg)
-
-	default:
-		http.Error(w, r.Method, http.StatusMethodNotAllowed)
-	}
+func (s *fakeACMEServer) Authorization(uri string) (*Authorization, error) {
+	return nil, fmt.Errorf("unimplemented: Authorization")
 }
 
-func (s *fakeACMEServer) newAuthz(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		p := protocol.Problem{
+func (s *fakeACMEServer) Certificate(uri string) (*Certificate, error) {
+	return nil, fmt.Errorf("unimplemented: Certificate")
+}
+
+func (s *fakeACMEServer) Account(accountKey crypto.PublicKey) ServerAccount {
+	return s
+}
+
+func (s *fakeACMEServer) AuthorizeIdentity(id Identifier) (*Authorization, error) {
+	return nil, &protocol.ServerError{
+		StatusCode: http.StatusUnauthorized,
+		Problem: &protocol.Problem{
 			Type:   protocol.Unauthorized,
 			Title:  "mock error",
 			Detail: "mock error detail",
-		}
-		s.setNonce(w)
-		s.respond(w, http.StatusUnauthorized, protocol.ProblemJSON, &p)
-
-	default:
-		http.Error(w, r.Method, http.StatusMethodNotAllowed)
+			Status: http.StatusUnauthorized,
+		},
 	}
 }
 
-func (s *fakeACMEServer) setNonce(w http.ResponseWriter) {
-	w.Header().Set(protocol.ReplayNonce, strconv.FormatInt(s.nextNonce, 10))
-	s.nextNonce++
+func (s *fakeACMEServer) IssueCertificate(csr []byte) (*Certificate, error) {
+	return nil, fmt.Errorf("unimplemented: IssueCertificate")
 }
 
-func (s *fakeACMEServer) decodeBody(out interface{}, r *http.Request) error {
-	bs, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-	jws, err := jose.ParseSigned(string(bs))
-	if err != nil {
-		return err
-	}
-
-	bs, err = jws.Verify(testPublicKey)
-	if err != nil {
-		return err
-	}
-
-	return decodeBody(out, r.Header.Get(contentTypeHeader), bytes.NewReader(bs))
+func (s *fakeACMEServer) RevokeCertificate(cert []byte) error {
+	return fmt.Errorf("unimplemented: RevokeCertificate")
 }
 
-func (s *fakeACMEServer) respond(w http.ResponseWriter, status int, contentType string, body interface{}) {
-	w.Header().Set(contentTypeHeader, contentType)
-	w.WriteHeader(status)
+func (s *fakeACMEServer) UpdateRegistration(reg *Registration) (*Registration, error) {
+	return reg, nil
+}
 
-	r, err := encodeBody(contentType, body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+func (s *fakeACMEServer) ValidateChallenge(uri string, req protocol.Response) (protocol.Challenge, error) {
+	return nil, fmt.Errorf("unimplemented: ValidateChallenge")
+}
 
-	_, err = io.Copy(w, r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+// intNonceSource is a simple in-memory nonce source using a sequence
+// number and a map.
+type intNonceSource struct {
+	i      int
+	unseen map[string]struct{}
+	mu     sync.Mutex
+}
+
+// newIntNonceSource creates a new nonce source based on sequence
+// numbers.
+func newIntNonceSource() *intNonceSource {
+	return &intNonceSource{
+		unseen: map[string]struct{}{},
 	}
 }
 
-// decodeBody decodes an HTTP body as a specific contentType.
-func decodeBody(out interface{}, contentType string, r io.Reader) error {
-	switch contentType {
-	case protocol.JSON, protocol.ProblemJSON:
-		return json.NewDecoder(r).Decode(out)
+func (ns *intNonceSource) Nonce() (string, error) {
+	ns.mu.Lock()
+	defer ns.mu.Unlock()
 
-	case protocol.PKIXCert:
-		bs, err := ioutil.ReadAll(r)
-		if err != nil {
-			return err
-		}
-		bsout, ok := out.(*[]byte)
-		if !ok {
-			return fmt.Errorf("expected input to be a *[]byte, got %T", out)
-		}
-		*bsout = bs
-		return err
+	ns.i++
+	s := strconv.Itoa(ns.i)
+	ns.unseen[s] = struct{}{}
 
-	default:
-		return fmt.Errorf("unhandled content type: %q", contentType)
-	}
+	return s, nil
 }
 
-// encodeBody encodes an HTTP body as specified by the contentType.
-func encodeBody(contentType string, in interface{}) (io.Reader, error) {
-	switch contentType {
-	case protocol.JSON, protocol.ProblemJSON:
-		b := bytes.NewBuffer(nil)
-		if err := json.NewEncoder(b).Encode(in); err != nil {
-			return nil, err
-		}
-		return b, nil
+func (ns *intNonceSource) Verify(s string) error {
+	ns.mu.Lock()
+	defer ns.mu.Unlock()
 
-	case protocol.PKIXCert:
-		bsin, ok := in.(*[]byte)
-		if !ok {
-			return nil, fmt.Errorf("expected input to be a *[]byte, got %T", in)
-		}
-		return bytes.NewReader(*bsin), nil
-
-	default:
-		return nil, fmt.Errorf("unhandled content type: %q", contentType)
+	if _, ok := ns.unseen[s]; ok {
+		delete(ns.unseen, s)
+		return nil
 	}
+
+	return errBadNonce
 }
 
 var (
