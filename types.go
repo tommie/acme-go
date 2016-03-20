@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"net/http"
 	"time"
@@ -53,6 +54,7 @@ type Certificate struct {
 	Bytes      []byte
 	URI        string
 	IssuerURIs []string
+	RetryAfter time.Duration
 }
 
 type Identifier interface {
@@ -78,4 +80,25 @@ func newIdentifier(id protocol.Identifier) (Identifier, error) {
 	default:
 		return nil, fmt.Errorf("unknown identifier type %q in %v", id.Type, id)
 	}
+}
+
+type Registration struct {
+	protocol.Registration
+	URI               string
+	RecoveryKey       []byte
+	TermsOfServiceURI string
+}
+
+// newRegistration constructs a Registration from a registration
+// request and response.
+func newRegistration(reg *protocol.Registration, req *protocol.Registration, recPriv *ecdsa.PrivateKey) (*Registration, error) {
+	ret := &Registration{Registration: *reg}
+
+	if recPriv != nil {
+		if reg.RecoveryKey != nil {
+			return nil, fmt.Errorf("recovery keys are not implemented")
+		}
+	}
+
+	return ret, nil
 }

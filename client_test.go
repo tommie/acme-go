@@ -79,7 +79,7 @@ func TestClientAccountAuthorizeIdentity(t *testing.T) {
 		return &http.Response{
 			StatusCode: http.StatusCreated,
 			Header: http.Header{
-				"Location":          []string{"http://example.com/auth/1"},
+				locationHeader:      []string{"http://example.com/auth/1"},
 				protocol.RetryAfter: []string{"42"},
 			},
 		}, nil

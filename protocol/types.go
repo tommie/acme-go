@@ -90,6 +90,15 @@ func signJSON(s jose.Signer, payload interface{}) (*JSONWebSignature, error) {
 	return (*JSONWebSignature)(ret), nil
 }
 
+// An HTTPResponse describes HTTP-specific response fields reported by a server.
+type HTTPResponse struct {
+	// StatusCode is the HTTP status code.
+	StatusCode int
+
+	// Header is a set of headers to return.
+	Header http.Header
+}
+
 // ServerError is an error reported by an ACME server.
 type ServerError struct {
 	// Method is the HTTP method used.
@@ -119,6 +128,19 @@ func newServerError(req *http.Request, resp *http.Response) *ServerError {
 		return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, nil}
 	}
 	return &ServerError{req.Method, req.URL, resp.Status, resp.StatusCode, p}
+}
+
+// serverErrorf constructs a ServerError based on an HTTP status code,
+// a problem type and a free-text format string.
+func serverErrorf(code int, typ ProblemType, fmts string, args ...interface{}) error {
+	return &ServerError{
+		StatusCode: code,
+		Problem: &Problem{
+			Type:   typ,
+			Detail: fmt.Sprintf(fmts, args...),
+			Status: code,
+		},
+	}
 }
 
 func (e *ServerError) Error() string {

@@ -108,24 +108,3 @@ func doRegistration(hc protocol.Poster, uri string, req *protocol.Registration, 
 
 	return ret, nil
 }
-
-type Registration struct {
-	protocol.Registration
-	URI               string
-	RecoveryKey       []byte
-	TermsOfServiceURI string
-}
-
-// newRegistration constructs a Registration from a registration
-// request and response.
-func newRegistration(reg *protocol.Registration, req *protocol.Registration, recPriv *ecdsa.PrivateKey) (*Registration, error) {
-	ret := &Registration{Registration: *reg}
-
-	if recPriv != nil {
-		if reg.RecoveryKey != nil {
-			return nil, fmt.Errorf("recovery keys are not implemented")
-		}
-	}
-
-	return ret, nil
-}

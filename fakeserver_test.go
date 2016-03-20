@@ -65,7 +65,7 @@ func (s *fakeACMEServer) newRegistration(w http.ResponseWriter, r *http.Request)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Location", s.baseURL+"/reg/1")
+		w.Header().Set(locationHeader, s.baseURL+"/reg/1")
 		s.setNonce(w)
 		s.respond(w, http.StatusCreated, protocol.JSON, &reg)
 
