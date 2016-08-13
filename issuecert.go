@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/tommie/acme-go/protocol"
@@ -14,6 +15,29 @@ var (
 	ErrCanceled   = errors.New("operation canceled")
 	ErrUnsolvable = errors.New("unsolvable challenge")
 )
+
+// An AuthorizationError wraps another error and adds information about what
+// authorizations were being attempted.
+type AuthorizationError struct {
+	Err            error
+	Authorizations []*Authorization
+}
+
+func (e *AuthorizationError) Error() string {
+	var auths []string
+	for _, a := range e.Authorizations {
+		auth := fmt.Sprintf("Authorization of %s, one of: ", a.Identifier)
+		for _, comb := range a.Combinations {
+			var chals []string
+			for _, i := range comb {
+				chals = append(chals, string(a.Challenges[i].GetType()))
+			}
+			auth += fmt.Sprintf("(%s)", strings.Join(chals, ", "))
+		}
+		auths = append(auths, auth)
+	}
+	return fmt.Sprintf("%s (authorizations %s)", e.Err, strings.Join(auths, ", "))
+}
 
 // A CertificateIssuer can authorize and issue certificates in one
 // go. A currently running issuer can be canceled.
@@ -47,7 +71,7 @@ func (ci *CertificateIssuer) AuthorizeAndIssue(csr []byte, s Solver) (*Certifica
 	if len(as) > 0 {
 		cs, err := bestChallenges(s, as)
 		if err != nil {
-			return nil, err
+			return nil, &AuthorizationError{err, as}
 		}
 
 		stop, err := ci.startSolver(s, cs)
