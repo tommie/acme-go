@@ -18,7 +18,7 @@ func TestCertificateIssuerAuthorizeAndIssue(t *testing.T) {
 	ia := &stubIssuingAccount{
 		authzID: func(id Identifier) (*Authorization, error) {
 			ids = append(ids, id.String())
-			return &Authorization{Authorization: protocol.Authorization{Status: protocol.StatusValid}}, nil
+			return &Authorization{Authorization: protocol.Authorization{}, Status: protocol.StatusValid}, nil
 		},
 		issue: func(csr []byte) (*Certificate, error) {
 			if !reflect.DeepEqual(csr, testCSR) {
@@ -46,7 +46,7 @@ func TestCertificateIssuerCancel(t *testing.T) {
 	ia := &stubIssuingAccount{
 		authzID: func(id Identifier) (*Authorization, error) {
 			ci.Cancel()
-			return &Authorization{Authorization: protocol.Authorization{Status: protocol.StatusValid}}, nil
+			return &Authorization{Authorization: protocol.Authorization{}, Status: protocol.StatusValid}, nil
 		},
 	}
 

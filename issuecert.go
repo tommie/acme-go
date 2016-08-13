@@ -44,19 +44,21 @@ func (ci *CertificateIssuer) AuthorizeAndIssue(csr []byte, s Solver) (*Certifica
 		return nil, err
 	}
 
-	cs, err := bestChallenges(s, as)
-	if err != nil {
-		return nil, err
-	}
+	if len(as) > 0 {
+		cs, err := bestChallenges(s, as)
+		if err != nil {
+			return nil, err
+		}
 
-	stop, err := ci.startSolver(s, cs)
-	if err != nil {
-		return nil, err
-	}
-	defer stop()
+		stop, err := ci.startSolver(s, cs)
+		if err != nil {
+			return nil, err
+		}
+		defer stop()
 
-	if err := ci.waitAuthorizations(as); err != nil {
-		return nil, err
+		if err := ci.waitAuthorizations(as); err != nil {
+			return nil, err
+		}
 	}
 
 	return ci.ia.IssueCertificate(csr)
@@ -96,6 +98,12 @@ func (ci *CertificateIssuer) authorizeIdentities(csr []byte) ([]*Authorization, 
 
 		case protocol.StatusInvalid:
 			return nil, fmt.Errorf("authorization invalid for %q", n)
+
+		case protocol.StatusValid:
+			// nothing
+
+		default:
+			return nil, fmt.Errorf("unknown authorization status for %q: %v", n, a.Status)
 		}
 	}
 
