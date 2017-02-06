@@ -457,19 +457,19 @@ func TestRetryAfter(t *testing.T) {
 			hdr:  http.Header{protocol.RetryAfter: []string{}},
 			def:  42 * time.Second,
 			want: 42 * time.Second,
-			err:  "strconv.ParseInt",
+			err:  `""`,
 		},
 		{
 			hdr:  http.Header{protocol.RetryAfter: []string{"abc"}},
 			def:  42 * time.Second,
 			want: 42 * time.Second,
-			err:  "strconv.ParseInt",
+			err:  `"abc"`,
 		},
 	}
 
 	for _, tst := range tsts {
 		got, err := retryAfter(tst.hdr, tst.def)
-		if err != nil && tst.err != "" && !strings.HasPrefix(err.Error(), tst.err) {
+		if err != nil && tst.err != "" && !strings.Contains(err.Error(), tst.err) {
 			t.Errorf("retryAfter(%v) error: got %v, want %v", tst.hdr, err, tst.err)
 		} else if got != tst.want {
 			t.Errorf("retryAfter(%v): got %v, want %v", tst.hdr, got, tst.want)
