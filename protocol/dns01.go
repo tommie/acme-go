@@ -1,6 +1,8 @@
 package protocol
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/square/go-jose"
@@ -25,6 +27,14 @@ func RespondDNS01(key *jose.JsonWebKey, c *DNS01Challenge) (*DNS01Response, erro
 	}
 
 	return &DNS01Response{c.Resource, c.Type, ka}, nil
+}
+
+// DNS01TXTRecord returns a TXT record data string based on generated key
+// authorization as created by RespondDNS01.
+func DNS01TXTRecord(keyAuthz string) string {
+	h := sha256.New()
+	h.Write([]byte(keyAuthz))
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 type DNS01Challenge struct {

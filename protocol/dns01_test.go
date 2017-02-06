@@ -29,6 +29,14 @@ func TestRespondDNS01(t *testing.T) {
 	}
 }
 
+func TestDNS01TXTRecord(t *testing.T) {
+	got := DNS01TXTRecord("token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y")
+	want := "xrUFJ2TvB12Or6QYaPuOiB71Z7o_SgchqN1jFTyKB54"
+	if got != want {
+		t.Errorf("DNS01TXTRecord: got %q, want %q", got, want)
+	}
+}
+
 func TestDNS01Challenge(t *testing.T) {
 	in := &DNS01Challenge{
 		Resource: ResourceChallenge,
