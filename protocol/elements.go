@@ -2,13 +2,13 @@ package protocol
 
 import (
 	"encoding/json"
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // Registration describes a reg resource. ACME Section 5.2.
 type Registration struct {
 	Resource          ResourceType     `json:"resource"`
-	Key               *jose.JsonWebKey `json:"key,omitempty"`
+	Key               *jose.JSONWebKey `json:"key,omitempty"`
 	ContactURIs       []string         `json:"contact,omitempty"`
 	AgreementURI      string           `json:"agreement,omitempty"`
 	AuthorizationsURI string           `json:"authorizations,omitempty"`
@@ -127,8 +127,8 @@ type Identifier struct {
 
 // RecoveryKey describes a recover-reg resource. ACME Section 6.3.1.
 type RecoveryKey struct {
-	Client *jose.JsonWebKey `json:"client,omitempty"`
-	Server *jose.JsonWebKey `json:"server,omitempty"`
+	Client *jose.JSONWebKey `json:"client,omitempty"`
+	Server *jose.JSONWebKey `json:"server,omitempty"`
 	Length int              `json:"length,omitempty"`
 }
 

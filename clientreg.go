@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/square/go-jose"
 	"github.com/tommie/acme-go/protocol"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // RegisterAccount performs an account registration and returns a
@@ -50,7 +50,7 @@ func WithAgreementURI(u string) RegistrationOpt {
 func WithRecoveryKeyMaterial(key *ecdsa.PrivateKey, len int) RegistrationOpt {
 	return func(r *protocol.Registration) {
 		r.RecoveryKey = &protocol.RecoveryKey{
-			Client: &jose.JsonWebKey{Key: key},
+			Client: &jose.JSONWebKey{Key: key},
 			Length: len,
 		}
 	}

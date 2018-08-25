@@ -3,7 +3,7 @@ package protocol
 import (
 	"fmt"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
@@ -49,7 +49,7 @@ func (c *Possession01Challenge) GetError() *Problem        { return c.Error }
 type Possession01Validation struct {
 	Type        ChallengeType   `json:"type"`
 	Identifiers []Identifier    `json:"identifiers"`
-	AccountKey  jose.JsonWebKey `json:"accountKey"`
+	AccountKey  jose.JSONWebKey `json:"accountKey"`
 }
 
 type Possession01Response struct {

@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
@@ -31,7 +31,7 @@ var (
 type HTTPClient struct {
 	http   HTTPDoer
 	signer jose.Signer
-	nonces nonceStack
+	nonces *NonceStack
 }
 
 // An HTTPDoer is able to make HTTP requests. *net/http.Client is an
@@ -53,7 +53,9 @@ func NewHTTPClient(hc HTTPDoer, signer jose.Signer) *HTTPClient {
 		signer: signer,
 	}
 	if signer != nil {
-		signer.SetNonceSource(&ret.nonces)
+		if ns, ok := signer.Options().NonceSource.(*NonceStack); ok {
+			ret.nonces = ns
+		}
 	}
 
 	return ret
@@ -148,26 +150,26 @@ func (c *HTTPClient) do(req *http.Request, respBody interface{}) (*http.Response
 	}
 
 	n := resp.Header.Get(ReplayNonce)
-	if replayNonceRE.MatchString(n) {
+	if replayNonceRE.MatchString(n) && c.nonces != nil {
 		c.nonces.add(n)
 	}
 
 	return resp, nil
 }
 
-// nonceStack is a stack of nonces implementing jose.NonceSource.
-type nonceStack struct {
+// NonceStack is a stack of nonces implementing jose.NonceSource.
+type NonceStack struct {
 	ns []string
 }
 
 // add pushes a nonce to the stack.
-func (s *nonceStack) add(n string) {
+func (s *NonceStack) add(n string) {
 	s.ns = append(s.ns, n)
 }
 
 // Nonce pops a nonce from the stack. Can return ErrNoNonce, in which
 // case a non-secure request should be performed to populate the pool.
-func (s *nonceStack) Nonce() (string, error) {
+func (s *NonceStack) Nonce() (string, error) {
 	if len(s.ns) == 0 {
 		return "", ErrNoNonce
 	}

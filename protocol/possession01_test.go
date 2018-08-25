@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestRespondPossession01(t *testing.T) {
@@ -21,7 +21,7 @@ func TestRespondPossession01(t *testing.T) {
 		AccountKey:  *testJWK,
 	}
 
-	s, err := jose.NewSigner(jose.RS256, testJWK.Key)
+	s, err := jose.NewSigner(testSigningKey, nil)
 	if err != nil {
 		t.Fatalf("NewSigner failed: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestRespondPossession01(t *testing.T) {
 		t.Errorf("Verify(%+v) failed: %v", got, err)
 	}
 
-	// JsonWebSignatures do no unmarshal into the exact same data
+	// JSONWebSignatures do no unmarshal into the exact same data
 	// as the original.
 	got.Authorization = JSONWebSignature{}
 	want.Authorization = JSONWebSignature{}
@@ -82,7 +82,7 @@ func TestPossession01Response(t *testing.T) {
 		Type:     ChallengePossession01,
 	}
 
-	s, err := jose.NewSigner(jose.RS256, testJWK.Key)
+	s, err := jose.NewSigner(testSigningKey, &jose.SignerOptions{EmbedJWK: true})
 	if err != nil {
 		t.Fatalf("NewSigner failed: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestPossession01Response(t *testing.T) {
 		t.Errorf("Verify(%+v) failed: %v", got, err)
 	}
 
-	// JsonWebSignatures do no unmarshal into the exact same data
+	// JSONWebSignatures do no unmarshal into the exact same data
 	// as the original.
 	in.Authorization = JSONWebSignature{}
 	got.Authorization = JSONWebSignature{}

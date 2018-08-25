@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // DERData is raw DER-encoded data.
@@ -54,14 +54,14 @@ func (t *Time) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-type JSONWebSignature jose.JsonWebSignature
+type JSONWebSignature jose.JSONWebSignature
 
 func (s JSONWebSignature) Verify(verificationKey interface{}) ([]byte, error) {
-	return jose.JsonWebSignature(s).Verify(verificationKey)
+	return jose.JSONWebSignature(s).Verify(verificationKey)
 }
 
 func (s JSONWebSignature) MarshalJSON() ([]byte, error) {
-	return []byte(jose.JsonWebSignature(s).FullSerialize()), nil
+	return []byte(jose.JSONWebSignature(s).FullSerialize()), nil
 }
 
 func (s *JSONWebSignature) UnmarshalJSON(bs []byte) error {
@@ -70,7 +70,7 @@ func (s *JSONWebSignature) UnmarshalJSON(bs []byte) error {
 		return err
 	}
 
-	*(*jose.JsonWebSignature)(s) = *ss
+	*(*jose.JSONWebSignature)(s) = *ss
 
 	return nil
 }

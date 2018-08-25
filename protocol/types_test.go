@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestDERData(t *testing.T) {
@@ -54,7 +54,7 @@ func TestTime(t *testing.T) {
 }
 
 func TestJSONWebSignature(t *testing.T) {
-	s, err := jose.NewSigner(jose.RS256, testJWK.Key)
+	s, err := jose.NewSigner(testSigningKey, &jose.SignerOptions{EmbedJWK: true})
 	if err != nil {
 		t.Fatalf("NewSigner failed: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestJSONWebSignature(t *testing.T) {
 		t.Fatalf("Unmarshal(%v) failed: %v", bs, err)
 	}
 
-	// JsonWebSignatures do no unmarshal into the exact same data
+	// JSONWebSignatures do no unmarshal into the exact same data
 	// as the original.
 	if _, err := got.Verify(testPublicKey); err != nil {
 		t.Errorf("Verify(%+v) failed: %v", got, err)

@@ -9,12 +9,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // KeyAuthz returns the key authorization string for a challenge token
 // and account key. Section 7.1.
-func KeyAuthz(tok string, key *jose.JsonWebKey) (string, error) {
+func KeyAuthz(tok string, key *jose.JSONWebKey) (string, error) {
 	tp, err := key.Thumbprint(crypto.SHA256)
 	if err != nil {
 		return "", err

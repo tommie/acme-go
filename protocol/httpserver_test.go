@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestWriteError(t *testing.T) {
@@ -219,11 +219,10 @@ func TestEncodeBody(t *testing.T) {
 
 func TestReadRequest(t *testing.T) {
 	ns := newFakeNonceSource()
-	sig, err := jose.NewSigner(jose.RS256, testJWK)
+	sig, err := jose.NewSigner(testSigningKey, &jose.SignerOptions{NonceSource: ns, EmbedJWK: true})
 	if err != nil {
 		t.Fatalf("jose.NewSigner failed: %v", err)
 	}
-	sig.SetNonceSource(ns)
 	signed, err := signJSON(sig, &Registration{Resource: ResourceNewReg})
 	if err != nil {
 		t.Fatalf("signJSON failed: %v", err)

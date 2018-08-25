@@ -140,6 +140,6 @@ type Poster interface {
 	// into respBody, unless it is nil. The response body reader
 	// is already closed on return. If reqBody is not nil, it is
 	// encoded (depending on contentType). The reqBody will be
-	// wrapped in a jose.JsonWebSignature.
+	// wrapped in a jose.JSONWebSignature.
 	Post(url, accept string, reqBody, respBody interface{}) (*http.Response, error)
 }

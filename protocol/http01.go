@@ -3,7 +3,7 @@ package protocol
 import (
 	"fmt"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 
 // RespondHTTP01 creates a response to a http-01 challenge given an
 // account key.
-func RespondHTTP01(key *jose.JsonWebKey, c *HTTP01Challenge) (*HTTP01Response, error) {
+func RespondHTTP01(key *jose.JSONWebKey, c *HTTP01Challenge) (*HTTP01Response, error) {
 	if c.Resource != ResourceChallenge {
 		return nil, fmt.Errorf("unexpected resource type: %s", c.Resource)
 	}

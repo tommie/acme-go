@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/square/go-jose"
 	"github.com/tommie/acme-go/protocol"
+	"gopkg.in/square/go-jose.v2"
 )
 
 var (
@@ -51,7 +51,9 @@ func NewClientAccount(dirURI, regURI string, accountKey crypto.PrivateKey) (*Cli
 		pub = hp.Public()
 	}
 
-	s, err := jose.NewSigner(signatureAlgo(accountKey), accountKey)
+	s, err := jose.NewSigner(
+		jose.SigningKey{Algorithm: signatureAlgo(accountKey), Key: accountKey},
+		&jose.SignerOptions{NonceSource: &protocol.NonceStack{}, EmbedJWK: true})
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // requestBodyLimit is the maximum number of bytes we read from a
@@ -119,7 +119,7 @@ func readRequest(out interface{}, r *http.Request, ns NonceSource) (crypto.Publi
 		return nil, serverErrorf(http.StatusBadRequest, Malformed, "expected exactly one signature")
 	}
 	var bs []byte
-	bs, err := signed.Verify(signed.Signatures[0].Header.JsonWebKey)
+	bs, err := signed.Verify(signed.Signatures[0].Header.JSONWebKey)
 	if err != nil {
 		return nil, serverErrorf(http.StatusForbidden, Unauthorized, "%v", err)
 	}
@@ -131,5 +131,5 @@ func readRequest(out interface{}, r *http.Request, ns NonceSource) (crypto.Publi
 	if err := decodeBody(out, r.Header.Get(contentTypeHeader), bytes.NewReader(bs)); err != nil {
 		return nil, err
 	}
-	return sig.JsonWebKey.Key, nil
+	return sig.JSONWebKey.Key, nil
 }

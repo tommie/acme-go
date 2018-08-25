@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 	DNS01Label     string        = "_acme-challenge"
 )
 
-func RespondDNS01(key *jose.JsonWebKey, c *DNS01Challenge) (*DNS01Response, error) {
+func RespondDNS01(key *jose.JSONWebKey, c *DNS01Challenge) (*DNS01Response, error) {
 	if c.Resource != ResourceChallenge {
 		return nil, fmt.Errorf("unexpected resource type: %s", c.Resource)
 	}

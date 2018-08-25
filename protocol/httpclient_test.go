@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestHTTPClientGet(t *testing.T) {
@@ -37,7 +37,7 @@ func TestHTTPClientPost(t *testing.T) {
 	hts := newFakeHTTPServer()
 	defer hts.Close()
 
-	s, err := jose.NewSigner(jose.RS256, testJWK.Key)
+	s, err := jose.NewSigner(testSigningKey, &jose.SignerOptions{NonceSource: &NonceStack{}})
 	if err != nil {
 		t.Fatalf("NewSigner failed: %v", err)
 	}

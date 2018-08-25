@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
@@ -23,7 +23,7 @@ func RespondTLSALPN01(c *TLSALPN01Challenge) (*TLSALPN01Response, error) {
 	return &TLSALPN01Response{c.Resource, c.Type}, nil
 }
 
-func TLSALPN01Validation(token string, key *jose.JsonWebKey) ([]byte, error) {
+func TLSALPN01Validation(token string, key *jose.JSONWebKey) ([]byte, error) {
 	ka, err := KeyAuthz(token, key)
 	if err != nil {
 		return nil, err
