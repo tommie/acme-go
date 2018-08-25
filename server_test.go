@@ -199,7 +199,7 @@ func TestBoulderDirectory(t *testing.T) {
 	for _, tst := range tsts {
 		d := BoulderDirectory(&tst.Root)
 		if d.NewReg != tst.ExpNewReg {
-			t.Errorf("BoulderDirectory(%q) NewReg: got %q, want %q", tst.Root, d.NewReg, tst.ExpNewReg)
+			t.Errorf("BoulderDirectory(%q) NewReg: got %q, want %q", tst.Root.String(), d.NewReg, tst.ExpNewReg)
 		}
 	}
 }
